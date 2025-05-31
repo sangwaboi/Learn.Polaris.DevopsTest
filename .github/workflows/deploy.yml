@@ -1,0 +1,122 @@
+name: CI/CD Pipeline for Flask App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: |
+        docker build -t flask-app:${{ github.sha }} .
+        docker tag flask-app:${{ github.sha }} flask-app:latest
+    
+    - name: Test Docker container
+      run: |
+        # Run container in background
+        docker run -d -p 5000:5000 --name test-container flask-app:latest
+        
+        # Wait for container to start
+        sleep 10
+        
+        # Test the endpoint
+        response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000)
+        if [ $response -eq 200 ]; then
+          echo "✅ Container test passed!"
+        else
+          echo "❌ Container test failed with status code: $response"
+          docker logs test-container
+          exit 1
+        fi
+        
+        # Clean up
+        docker stop test-container
+        docker rm test-container
+    
+    - name: Login to Docker Hub (optional - for pushing images)
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Push to Docker Hub (optional)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        if [ ! -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+          docker tag flask-app:latest ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+          docker tag flask-app:latest ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }}
+        fi
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Deploy to Server
+      if: ${{ secrets.SERVER_HOST }}
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          # Update system and install Docker if not present
+          sudo apt-get update
+          
+          # Install Docker if not installed
+          if ! command -v docker &> /dev/null; then
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker $USER
+          fi
+          
+          # Stop and remove existing container
+          sudo docker stop flask-app || true
+          sudo docker rm flask-app || true
+          
+          # Remove old images
+          sudo docker rmi flask-app:latest || true
+          
+          # Clone/pull latest code
+          if [ -d "flask-cicd-project" ]; then
+            cd flask-cicd-project
+            git pull origin main
+          else
+            git clone https://github.com/${{ github.repository }}.git flask-cicd-project
+            cd flask-cicd-project
+          fi
+          
+          # Build new image
+          sudo docker build -t flask-app:latest .
+          
+          # Run new container
+          sudo docker run -d -p 80:5000 --name flask-app --restart unless-stopped flask-app:latest
+          
+          # Verify deployment
+          sleep 10
+          if curl -f http://localhost; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+            sudo docker logs flask-app
+            exit 1
+          fi 

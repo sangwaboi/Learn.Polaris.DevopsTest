@@ -1,0 +1,19 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region    = "us-east-1"
+instance_type = "t2.micro"
+
+# SSH Key Configuration
+key_name   = "flask-app-key"
+public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQ... your-public-key-here"
+
+# GitHub Repository
+github_repo = "yourusername/flask-cicd-project"
+
+# Security (optional - restrict access)
+# allowed_cidr_blocks = ["YOUR_IP/32"]  # Replace with your IP for better security
+
+# Environment
+environment  = "dev"
+project_name = "flask-cicd" 
