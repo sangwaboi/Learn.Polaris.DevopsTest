@@ -9,7 +9,7 @@ key_name   = "flask-app-key"
 public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQ... your-public-key-here"
 
 # GitHub Repository
-github_repo = "yourusername/flask-cicd-project"
+github_repo = "sangwaboi/Learn.Polaris.DevopsTest"
 
 # Security (optional - restrict access)
 # allowed_cidr_blocks = ["YOUR_IP/32"]  # Replace with your IP for better security
