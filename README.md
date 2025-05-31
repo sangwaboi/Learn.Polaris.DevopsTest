@@ -43,8 +43,8 @@ flask-cicd-project/
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd flask-cicd-project
+git clone https://github.com/sangwaboi/Learn.Polaris.DevopsTest.git
+cd Learn.Polaris.DevopsTest
 
 # Test Flask app locally
 pip install -r requirements.txt
@@ -58,8 +58,8 @@ curl http://localhost:8080
 
 ### 2. GitHub Setup
 
-1. **Create GitHub Repository**
-   - Create a new repository on GitHub
+1. **Create GitHub Repository** ✅ DONE
+   - Repository: https://github.com/sangwaboi/Learn.Polaris.DevopsTest.git
    - Push this code to your repository
 
 2. **Configure GitHub Secrets**
@@ -262,4 +262,4 @@ This project is licensed under the MIT License.
 
 **Happy Coding! 🎉**
 
-*This project demonstrates a complete DevOps pipeline from development to production deployment.* 
+*This project demonstrates a complete DevOps pipeline from development to production deployment.*
