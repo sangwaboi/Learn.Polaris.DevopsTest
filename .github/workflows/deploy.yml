@@ -53,6 +53,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
+    - name: Test SSH Connection
+      run: |
+        echo "Testing SSH connection..."
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key.pem
+        chmod 600 ssh_key.pem
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ssh_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+        rm ssh_key.pem
+    
     - name: Deploy to Server
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -62,7 +70,7 @@ jobs:
         port: ${{ secrets.SERVER_PORT }}
         command_timeout: 30m
         script_stop: true
-        debug: true
+        debug: false
         script: |
           echo "🚀 Starting deployment..."
           
