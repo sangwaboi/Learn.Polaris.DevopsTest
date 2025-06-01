@@ -3,7 +3,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Hello from your containerized Flask app!"
+    return "Hello from your containerized Flask app! ~Deployed via CI/CD"
     return "can you hear me?"
     
 
